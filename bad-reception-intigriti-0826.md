@@ -6,6 +6,8 @@
 
 **Techniques:** DOMPurify `ADD_TAGS` misconfiguration · CSP `script-src 'self'` same-origin bypass · JSONP callback gadget · missing `X-Content-Type-Options: nosniff` / MIME execution · stored XSS via headless bot
 
+> 📄 Prefer the styled version? [Download the PDF](./Bad_Reception_0826_writeup.pdf)
+
 ---
 
 ## Overview — a TV service with a channel you're not allowed to watch
