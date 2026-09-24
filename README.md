@@ -10,6 +10,12 @@ Writeups from CTF challenges and lab-based security research, focused on web exp
 |---|---|---|---|
 | [Bad Reception](./bad-reception-intigriti-0826.md) | Intigriti CTF 0826 | Web / XSS | DOMPurify `ADD_TAGS` bypass · CSP `script-src 'self'` same-origin bypass · JSONP gadget |
 
+## Methodology
+
+| Guide | Category | What it covers |
+|---|---|---|
+| [OAuth2 / OIDC Discovery Playbook](./oauth-oidc-discovery-playbook.md) | Web / Identity | Reading the discovery document · provider fingerprinting (Entra ID, Okta, Keycloak, Auth0, Duende, Cognito) · flow classification · PKCE · `redirect_uri` and `state` misconfigurations · reporting |
+
 ---
 
 *Everything here is CTF or authorized-lab work. No real-world targets, credentials, or findings are published.*
