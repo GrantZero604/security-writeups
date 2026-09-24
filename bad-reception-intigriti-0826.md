@@ -1,6 +1,6 @@
 # Bad Reception — Intigriti CTF 0826
 
-**Author:** grantzero  ·  **Event:** Intigriti CTF 0826 (August 2026)  ·  **Category:** Web / XSS
+**Author:** Bram Brinkmeier (`grantzero`)  ·  **Event:** Intigriti CTF 0826 (August 2026)  ·  **Category:** Web / XSS
 
 > **TL;DR** — Unauthenticated stored XSS executing inside a moderator bot's privileged session. Three stacked defenses — a DOMPurify sanitizer, a `script-src 'self'` CSP, and an input filter — each had a matching gap. A same-origin JSONP endpoint turned *"I can inject a `<script>` tag"* into *"I can run arbitrary JavaScript from the site's own origin."* The moderator's credentialed session then fetches the locked channel and beacons it back to me.
 
