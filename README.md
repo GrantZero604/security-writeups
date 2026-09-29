@@ -8,6 +8,7 @@ Writeups from CTF challenges and lab-based security research, focused on web exp
 
 | Challenge | Event | Category | Techniques |
 |---|---|---|---|
+| [Critter Gallery](./critter-gallery-intigriti-0926.md) | Intigriti CTF 0926 | Web / SQL Injection | Base64-wrapped injection point · union-based SQLi · blank-response error oracle · MySQL hex literals · `group_concat()` schema dump |
 | [Bad Reception](./bad-reception-intigriti-0826.md) | Intigriti CTF 0826 | Web / XSS | DOMPurify `ADD_TAGS` bypass · CSP `script-src 'self'` same-origin bypass · JSONP gadget |
 
 ## Methodology
