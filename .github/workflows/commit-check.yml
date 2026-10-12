@@ -1,0 +1,38 @@
+# Fails when a commit carries a co-author trailer, a personal mail address or a tool session link.
+# Solo repository: every commit should be authored by the GitHub no-reply identity only.
+name: Commit check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commit-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit metadata
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then range="$BASE..$HEAD"; else range="$GITHUB_SHA"; fi
+          bad=0
+          while IFS= read -r -d $'\x1e' rec; do
+            rec="${rec#$'\n'}"; [ -z "$rec" ] && continue
+            sha="${rec%%$'\x1f'*}"; rest="${rec#*$'\x1f'}"
+            ae="${rest%%$'\x1f'*}"; rest="${rest#*$'\x1f'}"
+            ce="${rest%%$'\x1f'*}"; msg="${rest#*$'\x1f'}"
+            if printf '%s\n%s\n' "$ae" "$ce" | grep -qiE '@(gmail\.com|anthropic\.com)$'; then
+              echo "::error::${sha:0:7} uses a personal or tool mail address ($ae / $ce)"; bad=1; fi
+            if printf '%s' "$msg" | grep -qiE '^co-authored-by:|claude\.ai/|@anthropic\.com'; then
+              echo "::error::${sha:0:7} has a co-author trailer or tool session link in its message"; bad=1; fi
+          done < <(git log "$range" --format='%H%x1f%ae%x1f%ce%x1f%B%x1e')
+          [ "$bad" = 0 ] && echo "All commits in $range are clean."
+          exit "$bad"
