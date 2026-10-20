@@ -22,6 +22,10 @@ The payload sits in the heading and the flag comes back in the description slot.
 
 ---
 
+## The idea in plain terms
+
+The gallery asks the database for one animal by name, but it builds that question by pasting my input straight into it. The name is base64-encoded first, which makes the parameter look like harmless plumbing, but encoding is not protection. Decode it, and I can rewrite the question to ask for anything in the database, including a table the site never shows.
+
 ## The target
 
 Eight animals in a grid. Click one, get an emoji, a name and a one-line description. There's no login and nothing to upload, so the whole interactive surface is a single query parameter.

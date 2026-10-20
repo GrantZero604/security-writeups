@@ -8,9 +8,13 @@
 
 ---
 
+## The idea in plain terms
+
+A TV site has a locked channel that only a moderator can watch, and a moderator robot that opens anything I report. If I can make that robot run my code while it is logged in, it can watch the locked channel for me and pass along what it sees. Three defences stand in the way. Each turns out to have a gap, and the gaps line up.
+
 ## Overview: a TV service with a channel you're not allowed to watch
 
-"Bad Reception" is a streaming web app that mimics a broadcast TV service. Channels 1–10 play normally. Channel 11 returns `403, channel not available`. The flag is broadcasting on channel 11.
+"Bad Reception" is a streaming web app that mimics a broadcast TV service. Channels 1–10 play normally. Channel 11 returns `403 — channel not available`. The flag is broadcasting on channel 11.
 
 The app also lets you *report* a channel: `POST /api/report` queues a channel ID that a headless-Chrome moderator bot then opens on an internal page. That bot holds the credentials an ordinary visitor lacks, including access to channel 11. So the whole challenge reduces to one question: **can I get my JavaScript to run inside the moderator's browser?** If I can, the bot fetches channel 11 for me and I exfiltrate the result.
 
@@ -129,6 +133,8 @@ The root cause worth underlining is the JSONP endpoint: it converts the site's `
 1. **Remove `ADD_TAGS:['script']` from the DOMPurify config** on the moderation page. User-submitted content has no legitimate reason to carry executable script elements; this single change closes the injection sink.
 2. **Validate the JSONP callback**, restrict it to `[A-Za-z0-9_$.]`, or, better, retire JSONP entirely in favor of a normal JSON response with CORS. An unvalidated callback is a same-origin script gadget that defeats `script-src 'self'` for the whole application.
 3. **Send `X-Content-Type-Options: nosniff` on all API responses**, especially any serving `application/javascript`, so responses can't be executed from unintended contexts.
+
+Thanks to the Intigriti challenge team for this one. Three defences that each look sufficient on their own, with one same-origin JSONP endpoint quietly undoing all of them, is a good lesson in why controls have to be judged together.
 
 ---
 
