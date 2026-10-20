@@ -1,8 +1,8 @@
-# Critter Gallery — Intigriti CTF 0926
+# Critter Gallery · Intigriti CTF 0926
 
 **Author:** Bram Brinkmeier (`grantzero`) · **Event:** Intigriti CTF 0926 (September 2026) · **Category:** Web / SQL Injection
 
-> **TL;DR** — A base64-wrapped gallery parameter feeds an unparameterised MySQL query. One character makes the server return a 200 with no body at all, which is the whole tell. From there it's a single-column union into a `secret_vault` table the application never links to.
+> **TL;DR.** A base64-wrapped gallery parameter feeds an unparameterised MySQL query. One character makes the server return a 200 with no body at all, which is the whole tell. From there it's a single-column union into a `secret_vault` table the application never links to.
 
 ## Flag
 
@@ -42,7 +42,7 @@ The tiles carry the parameter:
 <a class="tile" href="?pic=cGFuZGE="> panda
 ```
 
-Base64. It stops nothing, of course — the server decodes before it does anything else — but it does a good job of making a parameter look like something the application generated instead of something you're invited to edit.
+Base64. It stops nothing, of course (the server decodes before it does anything else), but it does a good job of making a parameter look like something the application generated instead of something you're invited to edit.
 
 ## Mapping the sinks
 
@@ -96,9 +96,9 @@ x-powered-by: PHP/8.2.33
 x-envoy-upstream-service-time: 3
 ```
 
-PHP produced this response: the `x-powered-by` is present, so the Envoy mesh in front isn't synthesising an error page. It came back in 3ms against roughly 700ms for a normal page, so the script died early. And the body is empty instead of truncated — even the static markup that renders before the detail panel is gone — so nothing the page would normally emit reached the client.
+PHP produced this response: the `x-powered-by` is present, so the Envoy mesh in front isn't synthesising an error page. It came back in 3ms against roughly 700ms for a normal page, so the script died early. And the body is empty instead of truncated (even the static markup that renders before the detail panel is gone), so nothing the page would normally emit reached the client.
 
-Which mechanism did it, I can't say. A fatal with output buffering dropped on the way out fits; so does the database driver in silent-error mode returning `false` and the page bailing before it rendered anything. A genuinely uncaught exception in PHP 8 would normally set a 500, so whatever this is, "unhandled" is the wrong word for it. For exploitation none of that matters: an empty body reliably means a malformed query, and the boolean test below corroborates that independently.
+Which mechanism did it, I can't say, but I can rule one out. A raw fatal doesn't fit: in PHP 8 a fatal error and an uncaught exception are the same event as far as the status line goes, and either sets a 500 whenever headers haven't gone out yet, which, with output buffering on, is exactly the case. A 500 is what I'd expect to see, and I don't. What does fit is the database driver in silent-error mode returning `false` and the page bailing before it rendered anything, with the status left at the 200 it was always going to be. So whatever this is, it's a handled path that handles nothing, and "unhandled" is the wrong word for it. For exploitation none of that matters: an empty body reliably means a malformed query, and the boolean test below corroborates that independently.
 
 The same table closed a door, incidentally: every HTML metacharacter came back encoded, so the `<h2>` sink doesn't break.
 
@@ -115,7 +115,7 @@ Clean separation, and my closing quote balanced the query, so the injection sits
 fox' OR '1'='1
 ```
 
-returns all eight descriptions concatenated. The application loops the whole result set and prints every row, and that single detail is what makes the rest of this easy — it turns a blind injection, where you extract one bit at a time, into one you can read like a terminal.
+returns all eight descriptions concatenated. The application loops the whole result set and prints every row, and that single detail is what makes the rest of this easy, it turns a blind injection, where you extract one bit at a time, into one you can read like a terminal.
 
 A couple of syntax notes. `fox'--` errors while `fox'#` works, because MySQL wants whitespace after `--` and `#` doesn't care; through an encoding layer that trailing space is exactly the sort of thing that gets normalised away, so `#` is the safer habit. And `ORDER BY 1` works where `ORDER BY 2` errors, so there's one column:
 
@@ -209,7 +209,7 @@ The `if not body` branch is the empty-response oracle from earlier, doing real w
 db      : critter_gallery
 version : 8.0.46
 tables  : animals,secret_vault
-  animals(description,id,name)
+  animals(id,name,description)
   secret_vault(id,note)
 
 flag    : INTIGRITI{01a09f56-74a2-700b-a849-ffe6742327b2}
@@ -231,7 +231,7 @@ zzz' UNION SELECT group_concat(grantee,0x20,privilege_type)
 → 'gallery'@'%' USAGE
 ```
 
-That needs reading carefully, and I got it wrong the first time. `user_privileges` lists **global** privileges only, and `USAGE` there means none — it does not mean the account has no privileges at all, which would be plainly false given it's reading the database in the same request. The schema grant is elsewhere:
+That needs reading carefully, and I got it wrong the first time. `user_privileges` lists **global** privileges only, and `USAGE` there means none, it does not mean the account has no privileges at all, which would be plainly false given it's reading the database in the same request. The schema grant is elsewhere:
 
 ```sql
 zzz' UNION SELECT group_concat(table_schema,0x3a,privilege_type)
@@ -243,7 +243,7 @@ zzz' UNION SELECT group_concat(table_name,0x3a,privilege_type)
 → (empty)
 ```
 
-Schema-wide `SELECT` on `critter_gallery`, nothing table-specific, and no global privileges. `FILE` is global-only, so `LOAD_FILE()` and `INTO OUTFILE` are both unavailable and the usual pivot to file read is closed. Stacked queries were never available either — the sink executes one statement — so the read-only testing below wasn't restraint so much as the only option.
+Schema-wide `SELECT` on `critter_gallery`, nothing table-specific, and no global privileges. `FILE` is global-only, so `LOAD_FILE()` and `INTO OUTFILE` are both unavailable and the usual pivot to file read is closed. Stacked queries were never available either (the sink executes one statement), so the read-only testing below wasn't restraint so much as the only option.
 
 For completeness, `user()` and `@@hostname` do disclose infrastructure detail:
 
@@ -258,7 +258,7 @@ Both are pod-ephemeral, but they're real infrastructure detail leaking out of a 
 
 A single unauthenticated GET gives arbitrary `SELECT` execution against the application database, with the results rendered straight into the page. There is no authentication sitting in front of it and no user interaction involved.
 
-On this asset that meant the whole `critter_gallery` schema, `secret_vault` included — a table the application exposes nowhere. Nothing about the gallery suggests it exists, and the injection reaches it anyway. Plus all of `information_schema` on top.
+On this asset that meant the whole `critter_gallery` schema, `secret_vault` included, a table the application exposes nowhere. Nothing about the gallery suggests it exists, and the injection reaches it anyway. Plus all of `information_schema` on top.
 
 What bounds the damage is the database account's grants, not anything the application decides. Here that's schema-scoped `SELECT` and no `FILE`, so it stops at reading and never becomes a file read or code execution. A more generously granted account would make the same bug considerably worse.
 
@@ -279,11 +279,11 @@ What bounds the damage is the database account's grants, not anything the applic
 
 ## Afterword
 
-Recon to flag was about twenty minutes. Most of the interesting work happened afterwards, going back over which of my conclusions I could actually support — and the `user_privileges` misreading is the one I'm glad I chased. Reading `USAGE` there as "this account has no privileges at all" is an easy mistake to make and an easy one to repeat, and it happens to be wrong in the direction that matters. The SELECT-only grant is why this reads as confidentiality-only instead of a file read. The injection was there either way.
+Recon to flag was about twenty minutes. Most of the interesting work happened afterwards, going back over which of my conclusions I could actually support, and the `user_privileges` misreading is the one I'm glad I chased. Reading `USAGE` there as "this account has no privileges at all" is an easy mistake to make and an easy one to repeat, and it happens to be wrong in the direction that matters. The SELECT-only grant is why this reads as confidentiality-only instead of a file read. The injection was there either way.
 
 Around 50 requests end to end, rate-limited under 3/sec per the programme rules, read-only throughout, confined to the one in-scope host and conducted under the programme's safe harbour.
 
-Thanks to [@khanhdlq](https://x.com/khanhdlq) for building this one. Hiding a SQL injection behind base64 is a nice piece of misdirection — the encoding does nothing defensively, it just makes the parameter look like plumbing rather than input, and I suspect that bought it more time from more people than any filter would have.
+Thanks to [@khanhdlq](https://x.com/khanhdlq) for building this one. Hiding a SQL injection behind base64 is a nice piece of misdirection, the encoding does nothing defensively, it just makes the parameter look like plumbing rather than input, and I suspect that bought it more time from more people than any filter would have.
 
 ---
 
