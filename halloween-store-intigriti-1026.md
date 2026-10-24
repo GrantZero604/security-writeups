@@ -4,6 +4,8 @@
 
 **Author:** Bram Brinkmeier (`grantzero`) · **Event:** Intigriti CTF 1026 (October 2026) · **Category:** Web / Business Logic
 
+**[→ Read the interactive edition](https://grantzero604.github.io/security-writeups/halloween-store/)** — every widget below runs live in the browser against the real model, and the request/response replay uses real captured responses from the challenge server. This page is the static fallback.
+
 > **TL;DR.** A sweet shop sells a €666 chest and gives you €66 of credit. Two public coupon codes get you 50% off, which is not enough. The "coupon already applied" guard remembers only the *last* code you used, not the set of codes on your cart, so a code is caught only when you submit it twice in a row. Alternate the two codes and each applies twice. 100% off. No payload: just four words typed into the promo box in the right order.
 
 ---
@@ -14,7 +16,7 @@ A Halloween candy shop with a bag, a promo box and a newsletter. The whole chall
 
 Picture a shop assistant told "never accept the same voucher twice", who only remembers the *last* voucher they were handed. Give them voucher A, then B, then A again: the last one they saw was B, so A looks new. Swap back and forth and every voucher is accepted as often as you like. That is the whole bug. The rest of this write-up is how I found it, why my first explanation was wrong, and how I proved the second one.
 
-**Want to see it before reading about it?** The [interactive demo](./demo-halloween-store/) puts the broken guard next to the fixed one. Two buttons, thirty seconds.
+**Want to see it before reading about it?** The [interactive edition](https://grantzero604.github.io/security-writeups/halloween-store/) puts the broken guard next to the fixed one, live. Two buttons, thirty seconds.
 
 ## The shop
 
@@ -206,11 +208,9 @@ The same file runs the attack against a `broken=False` cart, where the single sl
 
 ## Try it yourself
 
-I turned the model into a small page you can click through: [**interactive demo**](./demo-halloween-store/). Two carts, the shop as built and the shop with the fix, side by side. The yellow box shows the only thing the broken guard remembers. Press *Play the exploit* and watch it stay one step behind.
+I turned the model into a page you can click through: the [**interactive edition**](https://grantzero604.github.io/security-writeups/halloween-store/). Every section above has a live counterpart there — the promo box, the arithmetic steppers, the control that disproves the whitespace theory, the broken-vs-fixed cart, a self-test that checks the model against six recorded cases in your own browser, and a step-through replay of the real captured requests.
 
-![The interactive demo: the broken cart reaches €0.00, the fixed cart stops at €333.00](./img/halloween-store-12-interactive-demo.png)
-
-One guard is written correctly: the discount is clamped at the subtotal. I pushed the summed percentage to **350%** and the total floored at €0.00 with the credit untouched. **Free goods, not refund creation.**
+One guard is written correctly in the model: the discount is clamped at the subtotal. Push the summed percentage to **350%** in the interactive edition and the total floors at €0.00 with the credit untouched. **Free goods, not refund creation.**
 
 ## The full chain
 

@@ -9,7 +9,7 @@ Writeups from CTF challenges and lab-based security research, focused on web exp
 | Challenge | Event | Category | Techniques |
 |---|---|---|---|
 | [Critter Gallery](./critter-gallery-intigriti-0926.md) | Intigriti CTF 0926 | Web / SQL Injection | Base64-wrapped injection point · union-based SQLi · blank-response error oracle · MySQL hex literals · `group_concat()` schema dump |
-| [Halloween Store](./halloween-store-intigriti-1026.md) | Intigriti CTF 1026 | Web / Business Logic | Impossible-rendered-state tell · stale `cart.last_coupon` comparison vs a toggling coupon pair · reconstructed server model validated against 6 live observations · percentage-stack floor at 0, not a refund |
+| [Halloween Store](./halloween-store-intigriti-1026.md) ([interactive edition](https://grantzero604.github.io/security-writeups/halloween-store/)) | Intigriti CTF 1026 | Web / Business Logic | Impossible-rendered-state tell · stale `cart.last_coupon` comparison vs a toggling coupon pair · reconstructed server model validated against 6 live observations, re-checked live in the browser · real captured request/response replay · percentage-stack floor at 0, not a refund |
 | [Bad Reception](./bad-reception-intigriti-0826.md) | Intigriti CTF 0826 | Web / XSS | DOMPurify `ADD_TAGS` bypass · CSP `script-src 'self'` same-origin bypass · JSONP gadget |
 
 ## Methodology
