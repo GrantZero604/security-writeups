@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Halloween Store - the one-slot coupon guard</title>
+<style>
+  :root{--bg:#fff8ef;--card:#ffffff;--ink:#231f20;--mute:#6b6460;--line:#eadfd2;--accent:#e8742a;
+        --good:#2f7d4f;--bad:#b23a2a;--slot:#fff1cf}
+  @media (prefers-color-scheme:dark){:root{--bg:#1b1716;--card:#252020;--ink:#f3ece6;--mute:#b3a9a1;
+        --line:#3a3230;--accent:#f0883e;--good:#5cc489;--bad:#ff7a66;--slot:#3a2f1b}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+  main{max-width:1040px;margin:0 auto;padding:28px 16px 60px}
+  h1{font:600 1.7rem/1.2 Georgia,serif;margin:0 0 6px}
+  p.lede{color:var(--mute);margin:0 0 22px;max-width:70ch}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .card h2{font-size:1.05rem;margin:0 0 2px}
+  .card .sub{color:var(--mute);font-size:.88rem;margin:0 0 14px}
+  .slot{background:var(--slot);border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;
+        font:600 .92rem ui-monospace,Menlo,monospace;margin-bottom:12px}
+  .slot small{display:block;font:400 .78rem system-ui;color:var(--mute)}
+  .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+  .promo{color:var(--accent)}
+  .total{font:600 1.5rem Georgia,serif;display:flex;justify-content:space-between;margin:12px 0 4px}
+  .status{font-weight:600;font-size:.92rem;min-height:1.4em}
+  .ok{color:var(--good)} .no{color:var(--bad)}
+  .log{font:.8rem/1.5 ui-monospace,Menlo,monospace;color:var(--mute);margin-top:10px;min-height:5.5em;
+       border-top:1px solid var(--line);padding-top:8px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px}
+  button{font:600 .95rem system-ui;border:0;border-radius:8px;padding:10px 14px;cursor:pointer;
+         background:var(--ink);color:var(--bg)}
+  button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button.go{background:var(--accent);color:#fff}
+  button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .note{color:var(--mute);font-size:.9rem;margin-top:18px;max-width:75ch}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.9em}
+</style>
+</head>
+<body>
+<main>
+  <h1>The coupon guard that remembers one code</h1>
+  <p class="lede">Both carts hold the €666 chest and have €66 of credit. Apply the two public codes in
+  any order you like and watch the yellow box: it is the only thing the guard on the left checks.
+  The cart on the right is the same shop with the one-line fix.</p>
+
+  <div class="controls">
+    <button onclick="apply('NIGHT20')">Apply NIGHT20 (20%)</button>
+    <button onclick="apply('NEWS30')">Apply NEWS30 (30%)</button>
+    <button class="alt" onclick="twice()">Same code twice in a row</button>
+    <button class="go" onclick="play()">▶ Play the exploit</button>
+    <button class="alt" onclick="reset()">Reset</button>
+  </div>
+
+  <div class="grid">
+    <section class="card" id="broken">
+      <h2>The shop as built</h2>
+      <p class="sub">Guard: <code>last_coupon == code</code></p>
+      <div class="slot"></div><div class="lines"></div>
+      <div class="total"><span>Total</span><span class="t"></span></div>
+      <div class="status"></div><div class="log"></div>
+    </section>
+    <section class="card" id="fixed">
+      <h2>With the one-line fix</h2>
+      <p class="sub">Guard: <code>code in applied_coupons</code></p>
+      <div class="slot"></div><div class="lines"></div>
+      <div class="total"><span>Total</span><span class="t"></span></div>
+      <div class="status"></div><div class="log"></div>
+    </section>
+  </div>
+
+  <p class="note">The left guard only compares a code with the <em>previous</em> one, so alternating
+  two codes never trips it. Each code ends up applied twice: 20 + 30 + 20 + 30 = 100% off, total
+  €0.00. The right guard checks everything already on the cart, so the third request is refused and
+  the total stops at €333.00. Behaviour matches the live challenge on every case I tested
+  (<code>local-repro.py</code>, 6/6).</p>
+</main>
+
+<script>
+const PROMOS = {NIGHT20: 20, NEWS30: 30}, SUBTOTAL = 66600, CREDIT = 6600;
+const euro = c => "€" + (c / 100).toLocaleString("en-IE", {minimumFractionDigits: 2});
+
+function makeCart(broken) {
+  return {broken, promos: {}, last: null, log: [],
+    apply(raw) {
+      const code = raw.trim().toUpperCase();
+      if (!(code in PROMOS)) return this.note(code, "invalid_coupon");
+      const already = this.broken ? this.last === code : code in this.promos;
+      if (already) return this.note(code, "coupon_already_applied");
+      this.promos[code] = (this.promos[code] || 0) + 1;
+      this.last = code;
+      return this.note(code, "ok");
+    },
+    note(code, r) { this.log.push(`apply ${code.padEnd(8)} → ${r}`); this.log = this.log.slice(-5); return r; },
+    get percent() { return Object.entries(this.promos).reduce((s, [c, n]) => s + PROMOS[c] * n, 0); },
+    get total() { return SUBTOTAL - Math.min(Math.floor(SUBTOTAL * this.percent / 100), SUBTOTAL); }
+  };
+}
+
+let carts;
+function render() {
+  for (const [id, c] of Object.entries(carts)) {
+    const el = document.getElementById(id);
+    el.querySelector(".slot").innerHTML = c.broken
+      ? `<small>what the guard remembers</small>last_coupon = ${c.last ?? "none"}`
+      : `<small>what the guard checks</small>applied = {${Object.keys(c.promos).join(", ") || "none"}}`;
+    el.querySelector(".lines").innerHTML =
+      `<div class="row"><span>Subtotal</span><span>${euro(SUBTOTAL)}</span></div>` +
+      Object.entries(c.promos).map(([code, n]) =>
+        `<div class="row promo"><span>${code} · ${PROMOS[code]}% off${n > 1 ? " × " + n : ""}</span>` +
+        `<span>−${euro(Math.floor(SUBTOTAL * PROMOS[code] * n / 100))}</span></div>`).join("");
+    el.querySelector(".t").textContent = euro(c.total);
+    const ok = c.total <= CREDIT;
+    el.querySelector(".status").innerHTML = ok
+      ? `<span class="ok">✓ Checkout allowed - the €666 chest for ${euro(c.total)}</span>`
+      : `<span class="no">✗ Checkout blocked - ${euro(c.total - CREDIT)} short of the €66 credit</span>`;
+    el.querySelector(".log").textContent = c.log.join("\n");
+    el.querySelector(".log").style.whiteSpace = "pre";
+  }
+}
+function apply(code) { carts.broken.apply(code); carts.fixed.apply(code); render(); }
+function reset() { carts = {broken: makeCart(true), fixed: makeCart(false)}; render(); }
+async function twice() {
+  reset(); apply('NIGHT20'); await new Promise(r=>setTimeout(r,500)); apply('NIGHT20');
+}
+async function play() {
+  reset();
+  for (const code of ["NIGHT20", "NEWS30", "NIGHT20", "NEWS30"]) {
+    await new Promise(r => setTimeout(r, 700)); apply(code);
+  }
+}
+reset();
+</script>
+</body>
+</html>
