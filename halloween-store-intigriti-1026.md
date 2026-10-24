@@ -30,7 +30,9 @@ And the announcement bar hands you a discount code before you have asked for one
 
 `/api/products` sets the price of the whole challenge: five sweets under €15, and one chest at **€666.00**.
 
-![The product grid: five cheap sweets and one very expensive chest](./img/halloween-store-08-product-grid.png)
+![Four of the shop's sweets, all under €15](./img/halloween-store-08-product-grid.png)
+
+(The fifth sweet and the €666 chest sit further down the grid; the chest gets its own screenshot next.)
 
 `midnight-vault` is "The Midnight Collection", the only item in its category, the only one `NIGHT20` discounts, and the one described as *"available until midnight—or until somebody claims it."*
 
@@ -160,7 +162,7 @@ No crafted payload. No whitespace. Two public codes, typed in the right order.
 
 ![Cart showing NIGHT20 applied twice: 70% off](./img/halloween-store-04-cart-duplicate.png)
 
-A detail that sharpens it: re-applying an existing code increments its `count` *without* moving it to the end of the promotions list. So when I applied `NEWS30` at step 4 above, `NEWS30` was still the last element of the array, and it was accepted anyway. The guard is therefore not reading the array at all. It is a **separate single-slot variable that drifts out of sync with the cart it is supposed to protect**. Removal re-arms it: delete a coupon and the slot is set to whatever promotion now sits last, which you then cannot immediately re-apply.
+A detail that sharpens it: re-applying an existing code increments its `count` *without* moving it to the end of the promotions list. So in the full alternation (`NIGHT20, NEWS30, NIGHT20, NEWS30`), the fourth request re-applies `NEWS30`, which is still the second entry inserted into the array — insertion order never changes on a repeat apply — and it is accepted anyway. The guard is therefore not reading the array at all. It is a **separate single-slot variable that drifts out of sync with the cart it is supposed to protect**. Removal re-arms it: delete a coupon and the slot is set to whatever promotion now sits last, which you then cannot immediately re-apply.
 
 ## Root cause, and checking I actually understand it
 
@@ -173,7 +175,7 @@ def apply_coupon(cart, submitted):
     code = submitted.strip().upper()                  # lookup normalises: trims + casefolds
     if code not in PROMOS:
         return error("invalid_coupon")
-    if code == "NEWS30" and not cart.session.subscribed:
+    if code == "NEWS30" and not cart.session.subscribed:     # observed; outside the validated six below
         return error("newsletter_required")
 
     if cart.last_coupon == code:                      # ← ONE SLOT, not a set
@@ -189,7 +191,7 @@ def recompute(cart):
     cart.total    = cart.subtotal - cart.discount
 ```
 
-One wrong comparison. `cart.last_coupon == code` where it should be `any(p.code == code for p in cart.promotions)`.
+One wrong comparison. `cart.last_coupon == code` where it should be `code in cart.promotions`.
 
 Guessing at server code is cheap, so I wrote the model out as a runnable file ([`local-repro.py`](./local-repro.py)) and ran my six live observations through it. If the reconstruction is right it should predict all six, including the two that embarrassed me:
 
@@ -214,7 +216,7 @@ One guard is written correctly in the model: the discount is clamped at the subt
 
 ## The full chain
 
-Seven requests from a clean session. All of it works by typing in the promo box, with no developer tools, no intercepting proxy and no crafted request:
+Eight requests from a clean session, the first just opening it. All of it works by typing in the promo box, with no developer tools, no intercepting proxy and no crafted request:
 
 ```python
 #!/usr/bin/env python3
@@ -230,6 +232,7 @@ def call(path, body=None):
         with op.open(r) as resp: return json.load(resp)
     except urllib.error.HTTPError as e: return json.load(e)
 
+call("/api/session")                                            # starts the shopping session
 call("/api/newsletter", {"email": "poc@example.com"})          # unlocks NEWS30
 call("/api/cart/items", {"productId": "midnight-vault"})       # €666.00
 
@@ -262,7 +265,7 @@ The €66 credit is incidental, not a constraint. Because the summed discount ha
 
 ## Remediation
 
-1. **Compare against the set, not the last action.** `any(p.code == code for p in cart.promotions)`. Better still, key the check on the resolved promotion and make application idempotent per cart, so order cannot matter at all.
+1. **Compare against the set, not the last action.** `code in cart.promotions`. Better still, key the check on the resolved promotion and make application idempotent per cart, so order cannot matter at all.
 2. **Never keep a second copy of state the cart already holds.** The single `last_coupon` slot exists only to answer a question the promotions list already answers. Two sources of truth drifted apart, and that is the whole bug.
 3. **Cap the discount in percentage terms, not just in amount**, so a 350% total is rejected instead of silently floored.
 4. **Re-price at checkout** from the cart's current contents rather than trusting a running total accumulated across requests.
