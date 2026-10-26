@@ -18,6 +18,12 @@ Writeups from CTF challenges and lab-based security research, focused on web exp
 |---|---|---|
 | [OAuth2 / OIDC Discovery Playbook](./oauth-oidc-discovery-playbook.md) | Web / Identity | Reading the discovery document · provider fingerprinting (Entra ID, Okta, Keycloak, Auth0, Duende, Cognito) · flow classification · PKCE · `redirect_uri` and `state` misconfigurations · reporting |
 
+## Labs
+
+| Lab | Difficulty | What it covers |
+|---|---|---|
+| [OAuth / Entra-style labs](./labs/oauth/) | easy, medium | Multi-tenant app trusting the `email` claim · redirect URI `startsWith` check leaking an authorization code · local only, zero dependencies |
+
 ---
 
 *Everything here is CTF or authorized-lab work. No real-world targets, credentials, or findings are published.*
