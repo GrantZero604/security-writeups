@@ -4,7 +4,7 @@
 
 **Author:** Bram Brinkmeier (`grantzero`) · **Event:** Intigriti CTF 1026 (October 2026) · **Category:** Web / Business Logic
 
-🏆 **Best write-up award:** Intigriti picked this writeup as one of the best write-ups of its [October 2026 challenge](https://app.intigriti.com/programs/intigriti/challenge1026/detail).
+🏆 **Write-up winner:** Intigriti named this its [first write-up winner](https://x.com/intigriti/status/2115385099948609914) of the [October 2026 challenge](https://app.intigriti.com/programs/intigriti/challenge1026/detail), one of three picked from 72 participant write-ups.
 
 **[→ Read the interactive edition](https://grantzero604.github.io/security-writeups/halloween-store/)** — every widget below runs live in the browser against the real model, and the request/response replay uses real captured responses from the challenge server. This page is the static fallback.
 
