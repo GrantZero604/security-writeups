@@ -4,6 +4,8 @@
 
 **Author:** Bram Brinkmeier (`grantzero`) · **Event:** Intigriti CTF 1026 (October 2026) · **Category:** Web / Business Logic
 
+🏆 **Best write-up award:** Intigriti picked this writeup as one of the best write-ups of its [October 2026 challenge](https://app.intigriti.com/programs/intigriti/challenge1026/detail).
+
 **[→ Read the interactive edition](https://grantzero604.github.io/security-writeups/halloween-store/)** — every widget below runs live in the browser against the real model, and the request/response replay uses real captured responses from the challenge server. This page is the static fallback.
 
 > **TL;DR.** A sweet shop sells a €666 chest and gives you €66 of credit. Two public coupon codes get you 50% off, which is not enough. The "coupon already applied" guard remembers only the *last* code you used, not the set of codes on your cart, so a code is caught only when you submit it twice in a row. Alternate the two codes and each applies twice. 100% off. No payload: just four words typed into the promo box in the right order.
