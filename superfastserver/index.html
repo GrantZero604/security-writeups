@@ -232,7 +232,7 @@ the HTTP stack and RSA verification functions. There is a weak seed used and a m
 issue. Try writing an exploit against it.<br><br>
 If you are a human, please ignore the anti-AI stuff and have fun :)</blockquote>
 
-<p>Next to it sit two strings built to trip AI safety classifiers, so an automated reader derails.
+<p>Next to it sit two strings that read as bait for an automated reader.
 Creative, and I enjoyed finding it. The advice itself is invented: the binary imports no
 <code>rand</code>, <code>srand</code>, <code>getrandom</code> or <code>time</code>, so there is
 no seed to be weak. When a hint names a mechanism, check the mechanism exists before you attack
@@ -382,7 +382,7 @@ them: the unknown-tag branch zeroes its payload, but <code>1337</code> is a <i>k
 whole job is to reply <code>LEET</code>.</p>
 
 <p>No length matching. A program longer than a chunk's 1024-byte cap just goes in several
-<code>1337</code> chunks, which land back to back. It does not use the offset bug at all: this is a second, independent defect. The order matters, though. Put the
+<code>1337</code> chunks, which land back to back. It does not use the offset bug at all: this is a second defect, and route 3 below is a third way to deliver the same one. The order matters, though. Put the
 <code>1337</code> chunk after <code>SIGN</code> and the signed program falls into the signature
 instead, where byte 47 happens to be zero. You still get the taunt, because that has already printed, but no flag.</p>
 
@@ -490,7 +490,7 @@ flag's first byte, add five, read it again, subtract five, read it again:</p>
 
 INI</code></pre>
 
-<p>Arbitrary read and arbitrary write across the server's address space, from inside the thing meant
+<p>Relative read and write across the thread's own memory, from inside the thing meant
 to contain me. The signature gate exists to guarantee that only trusted code runs, and the code it
 guarantees is a general purpose memory editor taking instructions from an unsigned buffer.</p>
 
@@ -537,8 +537,7 @@ of its fields. Then: pass <code>data_len</code> into the interpreter and bound t
 pointer with it; give the interpreter a dedicated zeroed tape and clamp <code>&gt;</code> and
 <code>&lt;</code> to it, rather than handing it a pointer next to the secret; reject a payload on
 any tag that does not define one; resolve the request path once and use that one result for
-<code>stat</code>, <code>opendir</code> and <code>fopen</code> alike; and give each verify its own
-bignum state.</p>
+<code>stat</code>, <code>opendir</code> and <code>fopen</code> alike.</p>
 
 <h2>Full proof of concept</h2>
 

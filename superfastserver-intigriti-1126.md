@@ -113,7 +113,7 @@ The binary also carries this, in plain text:
 >
 > If you are a human, please ignore the anti-AI stuff and have fun :)
 
-Next to it sit two strings built to trip AI safety classifiers, so an automated reader derails.
+Next to it sit two strings that read as bait for an automated reader.
 Creative, and I enjoyed finding it. The advice itself is invented: the binary imports no `rand`,
 `srand`, `getrandom` or `time`, so there is no seed to be weak. When a hint names a mechanism,
 check the mechanism exists before you attack it.
@@ -216,8 +216,8 @@ EXEC
 
 No length matching. A program longer than a chunk's 1024-byte cap just goes in several `1337`
 chunks, which land back to back. The signed program runs, prints its taunt,
-leaves the pointer on cell 21, and falls into my bytes. Worth being clear about what this is: it does not use the offset bug at all. It is a second,
-independent defect.
+leaves the pointer on cell 21, and falls into my bytes. Worth being clear about what this is: it does not use the offset bug at all. It is a second
+defect, and route 3 below is a third way to deliver the same one.
 
 ![The interpreter crosses out of the signed region into my bytes and prints the flag](img/superfastserver-05-bf-run.webp)
 
@@ -300,7 +300,7 @@ prog = b">" * (256 - 21) + b"." + b"+++++" + b"." + b"-----" + b"."
 INI
 ```
 
-Arbitrary read and arbitrary write across the server's address space, from inside the thing meant to
+Relative read and write across the thread's own memory, from inside the thing meant to
 contain me. The signature gate exists to guarantee that only trusted code runs, and the code it
 guarantees is a general purpose memory editor taking instructions from an unsigned buffer.
 
@@ -345,8 +345,7 @@ Better still, sign a header containing the offsets and lengths, and verify it be
 its fields. Then: pass `data_len` into the interpreter and bound the instruction pointer with it;
 give the interpreter a dedicated zeroed tape and clamp `>` and `<` to it, rather than handing it a
 pointer next to the secret; reject a payload on any tag that does not define one; resolve the
-request path once and use that one result for `stat`, `opendir` and `fopen` alike; and give each
-verify its own bignum state.
+request path once and use that one result for `stat`, `opendir` and `fopen` alike.
 
 ## Full proof of concept
 
@@ -386,6 +385,12 @@ c.request("POST", "/custom_protocol", body=payload,
 out = c.getresponse().read()
 m = re.search(rb"INTIGRITI\{[^}]*\}", out)
 print(m.group(0).decode() if m else out)
+```
+
+Output:
+
+```
+INTIGRITI{4c0532a9-f169-4a5d-ae02-a8b0671d2b07}
 ```
 
 All three routes were developed against a local rebuild, then confirmed against the challenge host.
