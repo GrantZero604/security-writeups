@@ -21,8 +21,12 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
         run: |
-          if [ "$EVENT" = "pull_request" ]; then range="$BASE..$HEAD"; else range="$GITHUB_SHA"; fi
+          # Only the commits this push or PR adds; "$GITHUB_SHA" alone made git log walk the whole history.
+          if [ "$EVENT" = "pull_request" ]; then range="$BASE..$HEAD"
+          elif [ -n "$BEFORE" ] && ! printf '%s' "$BEFORE" | grep -qE '^0+$' && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then range="$BEFORE..$GITHUB_SHA"
+          else range="$GITHUB_SHA^!"; fi
           bad=0
           while IFS= read -r -d $'\x1e' rec; do
             rec="${rec#$'\n'}"; [ -z "$rec" ] && continue
