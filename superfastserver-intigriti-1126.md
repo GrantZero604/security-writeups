@@ -136,29 +136,7 @@ and a leading `//` (plain `/` is a redirect) lists any directory:
 ![//src, although the page is titled "/": the server's own source, listed but not readable](img/superfastserver-03-src-listing.webp)
 
 None of `//src` is readable, but knowing `bf.c` exists before you know what the code page does is
-a useful shortcut. The same branch hides one more slip: a failed `opendir()` sends a 404 and falls
-straight through:
-
-```c
-pDStack_10168 = opendir(path);
-if (pDStack_10168 == NULL) {
-    send_response(fd, "404 Not Found", ...);     /* no return */
-}
-while (readdir(pDStack_10168) != NULL) { ... }   /* readdir(NULL) */
-```
-
-So requesting any directory the process cannot open crashes the server. I confirmed it on my own rebuild, not on the
-challenge host, with a control request first so the silence afterwards means something:
-
-```
-GET //tmp   -> 200, 424095 bytes      listing works, server healthy
-GET //root  -> 404, 10 bytes          /root is 0700, so opendir fails
-GET //tmp   -> connection failed      nothing listening on 8080 any more
-```
-
-If the server runs as a non-root user, `/root`, `/lost+found` and any `0700` directory owned by
-someone else will do it: one unauthenticated request, and the server is gone. Reported to Intigriti
-on 17 November.
+a useful shortcut.
 
 ## The signed gift
 

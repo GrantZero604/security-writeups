@@ -257,25 +257,7 @@ hardening landed on the file read, not on the listing, and a leading <code>//</c
 <figcaption><code>//src</code>, although the page is titled &ldquo;/&rdquo;: the server's own source, listed but not readable.</figcaption></figure>
 
 <p>None of <code>//src</code> is readable, but knowing <code>bf.c</code> exists before you know what
-the code page does is a useful shortcut. The same branch hides one more slip: a failed
-<code>opendir()</code> sends a 404 and falls straight through:</p>
-
-<pre><code>pDStack_10168 = opendir(path);
-if (pDStack_10168 == NULL) {
-    send_response(fd, "404 Not Found", ...);     /* no return */
-}
-while (readdir(pDStack_10168) != NULL) { ... }   /* readdir(NULL) */</code></pre>
-
-<p>So requesting any directory the process cannot open crashes the server. I confirmed it on my own rebuild, not on the
-challenge host, with a control request first so the silence afterwards means something:</p>
-
-<pre><code>GET //tmp   -&gt; 200, 424095 bytes      listing works, server healthy
-GET //root  -&gt; 404, 10 bytes          /root is 0700, so opendir fails
-GET //tmp   -&gt; connection failed      nothing listening on 8080 any more</code></pre>
-
-<p>If the server runs as a non-root user, <code>/root</code>, <code>/lost+found</code> and any
-<code>0700</code> directory owned by someone else will do it: one unauthenticated request, and the
-server is gone. Reported to Intigriti on 17 November.</p>
+the code page does is a useful shortcut.</p>
 
 <h2>The signed gift</h2>
 
@@ -620,8 +602,7 @@ found in a challenge binary. Thanks also to Intigriti for running these.</p>
 
 <footer>Written up privately while the challenge was open. Every route was
 developed against a local rebuild of the binary first; requests to the challenge host stayed inside
-the programme's stated limit of two per second. The memory read and write section and the crash
-were done on the rebuild only.</footer>
+the programme's stated limit of two per second. The memory read and write section was done on the rebuild only.</footer>
 
 </main>
 
